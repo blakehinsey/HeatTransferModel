@@ -3,8 +3,15 @@
 Created on Wed Aug 31 07:17:09 2016
 
 @author: blakehinsey
-Model3
-Qin is a function of time - this allows modelling of heater response
+Model Type 4
+
+Simple heat transfer model
+A volume subject to ambient conditions and a heat source.
+This version of the heat control is simply turn on heater if below threshold
+or turn off when above threshold
+There is an exponential ramp up/down of the heat source otherwise the solver will trip
+Need to take into acount the derivative of the error... PID next.
+
 """
 
 import numpy as np
@@ -20,8 +27,8 @@ Cp = 40; #heat capacity of water [J / (kg K)]
 Qin = 30; #heat source input [W]
 U = 12; #heat transfer coefficent of tank [W / (m^2 K)]
 A = .25; #area of tank [m^2]
-Ta = 20+273; #ambient temperature [K]
-T0 = 19+273; #initial water temperature
+Ta = 14+273; #ambient temperature [K]
+T0 = 20+273; #initial water temperature
 
 #Controller Input
 TTarget = 21+273;
@@ -53,7 +60,7 @@ def heatTrans(T, t, KQin, KTa, KTs,TTarget):
     TErrCont = TTarget-T;
     if TErrCont > .5:
         BHeat= 1;
-    elif TErrCont < -.1:
+    elif TErrCont < -.5:
         BHeat = 0;
         
     if (BHeat - BHeatLast) > 0:
@@ -101,12 +108,27 @@ TTargetArray = TTarget*np.ones(len(t))
 TError = (TModelOut - TTargetArray)
 
 plt.figure()
-plt.subplot(311).plot(t,sol-273,t,TTargetArray-273)
+plt.subplot(311).plot(t,sol-273,t,TTargetArray-273,'--')
 axes = plt.gca()
 axes.set_ylim([15,25])
-plt.subplot(312).plot(tOut,TErrOut,tOut,np.zeros(len(tOut)))
+axes.set_ylabel("Temperature")
+plt.subplot(312).plot(tOut,TErrOut,tOut,np.zeros(len(tOut)),'--')
+axes = plt.gca()
+axes.set_ylim([-3,3])
+axes.set_ylabel("TErrorControl")
 plt.subplot(313).plot(tOut,rControlOut,tOut,BHeatOut)
 axes = plt.gca()
-axes.set_ylim([0,2])
+axes.set_ylim([0,1.2])
+axes.set_ylabel("Heater Control")
 
+Tmin = np.min(TModelOut)-273
+Tmax = np.max(TModelOut)-273
+Tmean = np.mean(TModelOut)-273
+Tstdev = np.std(TModelOut)
 
+print("Min: %0.1f" % Tmin, "Mean: %0.1f" % Tmean, "Max: %0.1f" % Tmax, "Stdev: %0.1f"% Tstdev)
+
+#Heater OnN Times
+iHeatOn = np.where(np.diff(BHeatOut)==1)[0];
+#Heater OFF Times
+iHeatOff = np.where(np.diff(BHeatOut)==-1)[0];
