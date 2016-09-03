@@ -24,10 +24,10 @@ import matplotlib.pyplot as plt
 #Constants
 ms = 30; #water mass [kg]
 Cp = 40; #heat capacity of water [J / (kg K)]
-Qin = 30; #heat source input [W]
-U = 12; #heat transfer coefficent of tank [W / (m^2 K)]
-A = .25; #area of tank [m^2]
-Ta = 14+273; #ambient temperature [K]
+Qin = 25; #heat source input [W]
+U = 9; #heat transfer coefficent of tank [W / (m^2 K)]
+A = .4137; #area of tank [m^2]
+Ta = 15+273; #ambient temperature [K]
 T0 = 20+273; #initial water temperature
 
 #Controller Input
@@ -47,7 +47,7 @@ BHeat= 0;
 tOn = 0;
 
 rControlOut=([])
-tOut =([])
+tModelOut =([])
 BHeatOut = ([])
 TErrOut =([])
 
@@ -79,7 +79,7 @@ def heatTrans(T, t, KQin, KTa, KTs,TTarget):
         
     rControl = np.max([(1-sp.exp(-tHeat/50)),0])
     
-    tOut.append(t)
+    tModelOut.append(t)
     TErrOut.append(TErrCont)
     rControlOut.append(rControl)
     BHeatOut.append(BHeat)
@@ -98,7 +98,8 @@ def heatTrans(T, t, KQin, KTa, KTs,TTarget):
     return dTdt
 
 t = np.arange(0,60*60,10);
-    
+
+
 
 from scipy.integrate import odeint
 sol = odeint(heatTrans,T0,t,args=(KQin,KTa,KTs,TTarget),hmax=5);
@@ -112,11 +113,11 @@ plt.subplot(311).plot(t,sol-273,t,TTargetArray-273,'--')
 axes = plt.gca()
 axes.set_ylim([15,25])
 axes.set_ylabel("Temperature")
-plt.subplot(312).plot(tOut,TErrOut,tOut,np.zeros(len(tOut)),'--')
+plt.subplot(312).plot(tModelOut,TErrOut,tModelOut,np.zeros(len(tModelOut)),'--')
 axes = plt.gca()
 axes.set_ylim([-3,3])
 axes.set_ylabel("TErrorControl")
-plt.subplot(313).plot(tOut,rControlOut,tOut,BHeatOut)
+plt.subplot(313).plot(tModelOut,rControlOut,tModelOut,BHeatOut)
 axes = plt.gca()
 axes.set_ylim([0,1.2])
 axes.set_ylabel("Heater Control")
@@ -128,7 +129,7 @@ Tstdev = np.std(TModelOut)
 
 print("Min: %0.1f" % Tmin, "Mean: %0.1f" % Tmean, "Max: %0.1f" % Tmax, "Stdev: %0.1f"% Tstdev)
 
-#Heater OnN Times
+#Heater ON Times
 iHeatOn = np.where(np.diff(BHeatOut)==1)[0];
 #Heater OFF Times
 iHeatOff = np.where(np.diff(BHeatOut)==-1)[0];
