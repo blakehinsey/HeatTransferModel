@@ -102,7 +102,7 @@ t = np.arange(0,60*60,10);
 
 
 from scipy.integrate import odeint
-sol = odeint(heatTrans,T0,t,args=(KQin,KTa,KTs,TTarget),hmax=5);
+sol = odeint(heatTrans,T0,t,args=(KQin,KTa,KTs,TTarget),hmin=0.1,hmax=.1);
 TModelOut = np.reshape(sol,len(sol))
 
 TTargetArray = TTarget*np.ones(len(t))
@@ -133,3 +133,46 @@ print("Min: %0.1f" % Tmin, "Mean: %0.1f" % Tmean, "Max: %0.1f" % Tmax, "Stdev: %
 iHeatOn = np.where(np.diff(BHeatOut)==1)[0];
 #Heater OFF Times
 iHeatOff = np.where(np.diff(BHeatOut)==-1)[0];
+
+
+#Test PID Controller from here
+from PIDController import PIDController
+
+MyPID = PIDController(1,0,1)
+MyPID.set_SP(273+21)
+
+PID_output = np.zeros(len(sol))
+PID_err = np.zeros(len(sol))
+PID_P = np.zeros(len(sol))
+PID_I = np.zeros(len(sol))
+PID_D = np.zeros(len(sol))
+
+#return [PID_out, self.Err, self.P_val, self.D_val, self.I_val]
+
+for i in range(len(sol)):
+    PID_output[i], PID_err[i], PID_P[i], PID_I[i], PID_D[i] = MyPID.update(sol[i][0])
+
+plt.figure()
+plt.subplot(511).plot(PID_output)
+axes = plt.gca()
+axes.set_ylabel("PID")
+plt.subplot(512).plot(PID_err)
+axes = plt.gca()
+axes.set_ylabel("Error")
+plt.subplot(513).plot(PID_P)
+axes = plt.gca()
+axes.set_ylabel("P")
+plt.subplot(514).plot(PID_I)
+axes = plt.gca()
+axes.set_ylabel("I")
+plt.subplot(515).plot(PID_D)
+axes = plt.gca()
+axes.set_ylabel("D")
+
+
+"""
+Need to understand getting data from the class - what is returned when i MyPID.getSP and MyPID.SetSP
+Search getting and setting information in class
+
+Determine the difference in tModelOut and t - why factor of 10?
+"""

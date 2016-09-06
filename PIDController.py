@@ -26,7 +26,7 @@ class PIDController:
         self.I_val = self.Int * self.Ki
         
         PID_out = self.P_val + self.I_val + self.D_val
-        return PID_out
+        return [PID_out, self.Err, self.P_val, self.I_val, self.D_val]
     
     def set_SP(self,SP):
         #Reset the set point and reset rolling deriv and integral
@@ -45,3 +45,6 @@ class PIDController:
         
     def getD_val(self):
         return self.I_val
+        
+    def getSP(self):
+        return self.SP
